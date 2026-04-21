@@ -6,7 +6,7 @@ import com.expense.expense_tracker.model.Expense;
 import com.expense.expense_tracker.service.ExpenseService;
 
 import java.util.List;
-
+//controller class to handle HTTP requests related to expenses
 @RestController
 @RequestMapping("/expense")
 public class ExpenseController {
