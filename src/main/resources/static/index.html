@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <h2 class="text-center mb-4">Expense Tracker</h2>
+
+    <!-- FORM -->
+    <div class="card p-4 shadow-sm mb-4">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" id="title" class="form-control" placeholder="Title">
+            </div>
+            <div class="col-md-3">
+                <input type="number" id="amount" class="form-control" placeholder="Amount">
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="category" class="form-control" placeholder="Category">
+            </div>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-primary" onclick="addExpense()">Add / Update</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+    <select id="filter" class="form-select" onchange="filterExpenses()">
+        <option value="">All Categories</option>
+        <option value="Daily">Daily</option>
+        <option value="Transport">Transport</option>
+        <option value="Food">Food</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Accessory">Accessory</option>
+    </select>
+    </div>
+
+    <!-- TOTAL -->
+    <h4 class="mb-3">Total: ₹<span id="total">0</span></h4>
+
+    <!-- LIST -->
+    <div id="list"></div>
+
+</div>
+
+<script>
+let editId = null;
+const API = "http://localhost:8080/expense";
+
+function loadExpenses() {
+    const category = document.getElementById("filter").value;
+    const url = category ? `${API}/category/${category}` : API;
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById("list");
+            const totalEl = document.getElementById("total");
+
+            list.innerHTML = "";
+            let total = 0;
+
+            data.forEach(e => {
+                total += e.amount;
+
+                list.innerHTML += `
+                    <div class="card mb-2 shadow-sm">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${e.title}</strong> - ₹${e.amount}
+                                <span class="text-muted">(${e.category})</span>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-warning me-2"
+                                    onclick="editExpense(${e.id}, '${e.title}', ${e.amount}, '${e.category}')">
+                                    Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger"
+                                    onclick="deleteExpense(${e.id})">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            totalEl.innerText = total;
+        });
+}
+
+function addExpense() {
+    const title = document.getElementById("title").value;
+    const amount = document.getElementById("amount").value;
+    const category = document.getElementById("category").value;
+
+    const method = editId ? "PUT" : "POST";
+    const url = editId ? `${API}/${editId}` : API;
+
+    fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ title, amount, category })
+    })
+    .then(() => {
+        editId = null;
+        document.getElementById("title").value = "";
+        document.getElementById("amount").value = "";
+        document.getElementById("category").value = "";
+        loadExpenses();
+    });
+}
+
+function editExpense(id, title, amount, category) {
+    document.getElementById("title").value = title;
+    document.getElementById("amount").value = amount;
+    document.getElementById("category").value = category;
+    editId = id;
+}
+
+function deleteExpense(id) {
+    fetch(`${API}/${id}`, {
+        method: "DELETE"
+    }).then(() => loadExpenses());
+}
+
+function filterExpenses() {
+    loadExpenses();
+}
+
+loadExpenses();
+</script>
+
+</body>
+</html>
